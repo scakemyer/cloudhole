@@ -1,0 +1,57 @@
+html, body, .settings {
+  font-family: Anonymous, Inconsolata, Consolas, "DejaVu Sans Mono", monospace;
+  height: 150px;
+  width: 550px;
+  margin: 0;
+}
+
+.settings {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+}
+
+.setting,
+.checkbox {
+  margin: 0.2em;
+  padding: 0.2em;
+}
+
+.setting span,
+.checkbox span {
+  float: left;
+  margin-top: .25em;
+}
+
+.setting input {
+  font-family: Anonymous, Inconsolata, Consolas, "DejaVu Sans Mono", monospace;
+  width: 400px;
+  float: right;
+}
+
+.checkbox {
+  float: left;
+}
+
+.right,
+.right span {
+  float: right;
+  text-align: right;
+}
+
+.checkbox input {
+  margin-top: .33em;
+}
+
+.status {
+  float: left;
+  padding: 0.2em;
+}
+
+.button {
+  padding: 0.2em;
+}
+
+.button button {
+  float: right;
+}

@@ -1,0 +1,33 @@
+{
+  "version": "1.3.0",
+  "name": "CloudHole",
+  "description": "Cross-website CloudFlare cookies",
+  "manifest_version": 2,
+  "homepage_url": "https://github.com/scakemyer/cloudhole",
+  "icons": {
+    "512": "icons/cloudhole.png",
+    "48": "icons/cloudhole-48.png"
+  },
+
+  "applications": {
+    "gecko": {
+      "id": "@cloudhole",
+      "strict_min_version": "45.0"
+    }
+  },
+
+  "permissions": [
+    "tabs", "webRequest", "webRequestBlocking", "<all_urls>"
+  ],
+
+  "background": {
+    "scripts": ["background.js"]
+  },
+
+  "browser_action": {
+    "default_icon": "icons/cloudhole-32.png",
+    "default_title": "CloudHole settings",
+    "default_popup": "popup/settings.html"
+  }
+
+}

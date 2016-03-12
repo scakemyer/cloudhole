@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="settings.css"/>
+    <title>CloudHole settings</title>
+  </head>
+
+<body>
+
+  <div class="settings">
+    <div class="setting"><span>UserAgent:</span> <input id="useragent" type="text" value="" /></div>
+    <div class="setting"><span>Clearance:</span> <input id="clearance" type="text" value="" /></div>
+    <div>
+      <div class="checkbox"><span>Use Browser Agent</span>&nbsp;<input id="browseragent" type="checkbox" value="true" /></div>
+      <div class="checkbox right"><input id="cloudholeapi" type="checkbox" value="true" checked="checked"/>&nbsp;<span>Use CloudHole API</span></div>
+    </div>
+    <div class="button">
+      <div class="status" id="status"></div>
+      <button id="update">Update</button>
+      <button id="refresh">Refresh</button>
+    </div>
+  </div>
+
+  <script src="settings.js"></script>
+</body>
+
+</html>
