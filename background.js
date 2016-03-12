@@ -1,6 +1,7 @@
 "use strict";
 
 var clearancesApi = "https://cloudhole.herokuapp.com/clearances";
+var surgeClearances = "https://cloudhole.surge.sh/cloudhole.json";
 var userAgent = "";
 var clearance = "";
 var _id = "";
@@ -25,13 +26,13 @@ function setUseBrowserAgent(value) {
   // Reset our values so we don't delete potentially valid clearances
   if (value == true) {
     _id = "";
-    userAgent = "";
     clearance = "";
   }
 }
 function setUseCloudHoleAPI(value, callback) {
   useCloudHoleAPI = value;
   if (value == false) {
+    useBrowserAgent = true;
     _id = "";
     userAgent = "";
     clearance = "";
@@ -45,6 +46,27 @@ var getClearances = function() {
   return new Promise(function(resolve, reject) {
     var xhr = new XMLHttpRequest();
     xhr.open('GET', clearancesApi, true);
+    xhr.responseType = 'json';
+    xhr.onload = function() {
+      var statusCode = xhr.status;
+      if (statusCode == 200) {
+        resolve(xhr.response);
+      } else {
+        getSurgeClearances().then(function(data) {
+          resolve(data);
+        }, function(errorCode) {
+          reject(statusCode + "/" + errorCode);
+        });
+      }
+    };
+    xhr.send();
+  });
+};
+
+var getSurgeClearances = function() {
+  return new Promise(function(resolve, reject) {
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', surgeClearances, true);
     xhr.responseType = 'json';
     xhr.onload = function() {
       var statusCode = xhr.status;
@@ -164,7 +186,6 @@ function checkHeaders(e) {
     }
   }
   else {
-    status = "";
     failing = false;
     useBrowserAgent = false;
     if (sendClearance == true && useCloudHoleAPI == true) {

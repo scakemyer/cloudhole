@@ -53,7 +53,7 @@ document.querySelector("#refresh").addEventListener("click", function() {
 
 document.querySelector("#browseragent").addEventListener("click", function() {
   if (document.querySelector("#browseragent").checked == true) {
-    document.querySelector("#useragent").value = "";
+    document.querySelector("#useragent").value = navigator.userAgent;
     document.querySelector("#clearance").value = "";
   }
   else {
