@@ -120,7 +120,7 @@ function rewriteHeaders(e) {
       // Refresh userAgent and clearance if we're seeing a new one, and return headers unchanged
       if (header.value.indexOf("__cfduid") != -1 && header.value.indexOf("cf_clearance") != -1 && useBrowserAgent == true) {
         if (clearance == "" || failing == true) {
-          clearance = header.value.match(/__cfduid=\w+/g)[0] + '; ' + header.value.match(/cf_clearance=[a-z0-9\-]+/g)[0];
+          clearance = header.value.match(/cf_clearance=[a-z0-9\-]+/g)[0];
 
           // Set userAgent to browser-supplied one
           for (var header of e.requestHeaders) {
@@ -155,7 +155,7 @@ function rewriteHeaders(e) {
       header.value = header.value.replace(/cf_clearance=[a-z0-9\-]+;?\s?/g, '')
 
       // Add clearance to existing cookies
-      if (header.value.length > 0) {
+      if (header.value.length > 0 && header.value[header.value.length - 1] != ";") {
         header.value += "; ";
       }
       header.value += clearance;
