@@ -2,6 +2,7 @@
 var backgroundPage = chrome.extension.getBackgroundPage();
 
 var refresh = function() {
+  document.querySelector("#apikey").value = backgroundPage.apiKey;
   document.querySelector("#useragent").value = backgroundPage.userAgent;
   document.querySelector("#clearance").value = backgroundPage.clearance;
   document.querySelector("#browseragent").checked = backgroundPage.useBrowserAgent ? "checked" : false;

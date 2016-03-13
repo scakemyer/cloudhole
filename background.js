@@ -1,6 +1,10 @@
 "use strict";
 
-var clearancesApi = "https://cloudhole.herokuapp.com/clearances";
+var apiKey = 'xxxxxxx'.replace(/[xy]/g, function(c) {
+    var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16).toUpperCase();
+});
+var clearancesApi = "https://cloudhole.herokuapp.com";
 var surgeClearances = "https://cloudhole.surge.sh/cloudhole.json";
 var userAgent = "";
 var clearance = "";
@@ -45,7 +49,8 @@ function setUseCloudHoleAPI(value, callback) {
 var getClearances = function() {
   return new Promise(function(resolve, reject) {
     var xhr = new XMLHttpRequest();
-    xhr.open('GET', clearancesApi, true);
+    xhr.open('GET', clearancesApi + '/clearances', true);
+    xhr.setRequestHeader('Authorization', apiKey);
     xhr.responseType = 'json';
     xhr.onload = function() {
       var statusCode = xhr.status;
@@ -83,8 +88,9 @@ var getSurgeClearances = function() {
 var postClearance = function(payload) {
   return new Promise(function(resolve, reject) {
     var xhr = new XMLHttpRequest();
-    xhr.open('POST', clearancesApi);
+    xhr.open('POST', clearancesApi + '/clearances');
     xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.setRequestHeader('Authorization', apiKey);
     xhr.onload = function() {
       var statusCode = xhr.status;
       if (statusCode == 201) {
@@ -100,8 +106,9 @@ var postClearance = function(payload) {
 var deleteClearance = function() {
   return new Promise(function(resolve, reject) {
     var xhr = new XMLHttpRequest();
-    xhr.open('DELETE', clearancesApi + "/" + _id);
+    xhr.open('DELETE', clearancesApi + "/clearances/" + _id);
     xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.setRequestHeader('Authorization', apiKey);
     xhr.onload = function() {
       var statusCode = xhr.status;
       if (statusCode == 204) {
@@ -115,6 +122,14 @@ var deleteClearance = function() {
 };
 
 function rewriteHeaders(e) {
+  if (e.url.indexOf(clearancesApi) != -1) {
+    e.requestHeaders.push({
+      name: 'Authorization',
+      value: apiKey
+    });
+    return {requestHeaders: e.requestHeaders};
+  }
+
   for (var header of e.requestHeaders) {
     if (header.name == "Cookie") {
       // Refresh userAgent and clearance if we're seeing a new one, and return headers unchanged
@@ -222,7 +237,64 @@ var fetchClearance = function(callback) {
 }
 
 if (useCloudHoleAPI == true) {
-  fetchClearance();
+  var getKey = function() {
+    return new Promise(function(resolve, reject) {
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', clearancesApi + '/key', true);
+      xhr.responseType = 'json';
+      xhr.onload = function() {
+        var statusCode = xhr.status;
+        if (statusCode == 200) {
+          resolve(xhr.response);
+        } else {
+          reject(statusCode);
+        }
+      };
+      xhr.send();
+    });
+  };
+
+  getKey().then(function(data) {
+    apiKey = data.key;
+    fetchClearance();
+  }, function(returnStatus) {
+    status = "Failed to get API key: " + returnStatus + ", using IP-derived";
+
+    // Fallback to IP-based key
+    var getIp = function() {
+      return new Promise(function(resolve, reject) {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', "https://api.ipify.org?format=json", true);
+        xhr.responseType = 'json';
+        xhr.onload = function() {
+          var statusCode = xhr.status;
+          if (statusCode == 200) {
+            resolve(xhr.response);
+          } else {
+            reject(statusCode);
+          }
+        };
+        xhr.send();
+      });
+    };
+
+    getIp().then(function(data) {
+      var hashIp = function(str) {
+        var hash = 0, i, chr, len;
+        if (str.length === 0) return hash;
+        for (i = 0, len = str.length; i < len; i++) {
+          chr   = str.charCodeAt(i);
+          hash  = ((hash << 5) - hash) + chr;
+          hash |= 0;
+        }
+        return parseInt(hash).toString(16).toUpperCase();
+      };
+      apiKey = hashIp(data.ip);
+      fetchClearance();
+    }, function(returnStatus) {
+      status = "Failed to find external IP: " + returnStatus;
+    });
+  });
 }
 
 chrome.webRequest.onBeforeSendHeaders.addListener(
