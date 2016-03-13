@@ -3,7 +3,7 @@
 Firefox web extension for cross-website CloudFlare cookies.
 
 ### Installation
-Install like any other FireFox add-on from the [CloudHole add-on page](https://addons.mozilla.org/en-US/firefox/addon/cloudhole/) on addons.mozilla.org or from [about:addons](about:addons)
+Install like any other FireFox add-on from the [CloudHole add-on page](https://addons.mozilla.org/addon/cloudhole/) on addons.mozilla.org or from [about:addons](about:addons)
 
 #### Description
 Tired of solving CloudFlare captchas for half the websites you visit because you're using a VPN or TOR? This add-on is for you.
