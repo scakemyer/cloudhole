@@ -5,50 +5,39 @@ var refresh = function() {
   document.querySelector("#apikey").value = backgroundPage.apiKey;
   document.querySelector("#useragent").value = backgroundPage.userAgent;
   document.querySelector("#clearance").value = backgroundPage.clearance;
-  document.querySelector("#browseragent").checked = backgroundPage.useBrowserAgent ? "checked" : false;
   document.querySelector("#cloudholeapi").checked = backgroundPage.useCloudHoleAPI ? "checked" : false;
   document.querySelector("#status").innerText = backgroundPage.status;
 }
+backgroundPage.refresh = refresh;
 refresh();
 
 document.querySelector("#update").addEventListener("click", function() {
+  backgroundPage.status = "";
+
   var userAgent = document.querySelector("#useragent").value;
   var clearance = document.querySelector("#clearance").value;
-  var browserAgent = document.querySelector("#browseragent").checked;
+  var apiKey = document.querySelector("#apikey").value;
   var useCloudHoleAPI = document.querySelector("#cloudholeapi").checked;
 
-  var backgroundPage = chrome.extension.getBackgroundPage();
-  if (userAgent != "") {
-    backgroundPage.setUserAgent(userAgent);
-  }
-  if (clearance != "") {
-    backgroundPage.setClearance(clearance);
-  }
-  if (browserAgent != backgroundPage.useBrowserAgent) {
-    backgroundPage.setUseBrowserAgent(browserAgent);
+  backgroundPage.setUserAgent(userAgent);
+  backgroundPage.setClearance(clearance);
+
+  if (apiKey != "") {
+    backgroundPage.setApiKey(apiKey);
   }
   if (useCloudHoleAPI != backgroundPage.useCloudHoleAPI) {
-    backgroundPage.setUseCloudHoleAPI(useCloudHoleAPI, refresh);
+    backgroundPage.setUseCloudHoleAPI(useCloudHoleAPI);
   }
+
   refresh();
 });
 
 document.querySelector("#refresh").addEventListener("click", function() {
+  backgroundPage.status = "";
+  refresh();
+
   if (backgroundPage.useCloudHoleAPI == true) {
-    backgroundPage.getClearances().then(function(data) {
-      var rand = Math.floor(Math.random() * data.length);
-      backgroundPage.userAgent = data[rand].userAgent;
-      backgroundPage.clearance = data[rand].cookies;
-      backgroundPage._id = data[rand]._id;
-      refresh();
-    }, function(returnStatus) {
-      var status = "Failed to get clearance from API: " + returnStatus;
-      backgroundPage.status = status;
-      refresh();
-    });
-  }
-  else {
-    refresh();
+    backgroundPage.fetchClearance();
   }
 });
 
