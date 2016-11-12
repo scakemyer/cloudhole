@@ -11,7 +11,7 @@ var refresh = function() {
 backgroundPage.refresh = refresh;
 refresh();
 
-document.querySelector("#update").addEventListener("click", function() {
+document.querySelector("#save").addEventListener("click", function() {
   backgroundPage.status = "";
 
   var userAgent = document.querySelector("#useragent").value;
@@ -28,6 +28,20 @@ document.querySelector("#update").addEventListener("click", function() {
   if (useCloudHoleAPI != backgroundPage.useCloudHoleAPI) {
     backgroundPage.setUseCloudHoleAPI(useCloudHoleAPI);
   }
+
+  var payload = {
+    'userAgent': userAgent,
+    'cookies': clearance,
+    'label': "WebExtSave"
+  };
+
+  backgroundPage.postClearance(payload).then(function(data) {
+    backgroundPage.status = "Saved clearance to CloudHole API.";
+    refresh();
+  }, function(returnStatus) {
+    backgroundPage.status = `Save failed: ${returnStatus}`;
+    refresh();
+  });
 
   refresh();
 });

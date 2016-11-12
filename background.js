@@ -91,7 +91,7 @@ var getClearances = function() {
           if (keyData.length > 0) {
             resolve(keyData);
           } else {
-            reject(404);
+            reject("No clearance found.");
           }
         }, function(errorCode) {
           reject(statusCode + " / " + errorCode);
@@ -130,7 +130,13 @@ var postClearance = function(payload) {
       if (statusCode == 201) {
         resolve(xhr.response);
       } else {
-        reject(statusCode);
+        var error = statusCode;
+        try {
+          error = JSON.parse(xhr.response).error;
+        } catch (e) {
+          error = statusCode;
+        }
+        reject(error);
       }
     };
     xhr.send(JSON.stringify(payload));
@@ -165,56 +171,60 @@ function rewriteHeaders(e) {
     return {requestHeaders: e.requestHeaders};
   }
 
+  // Loop through request headers
   for (var header of e.requestHeaders) {
-    if (header.name == "Cookie" && header.value.indexOf("__cfduid") != -1) {
-      // Refresh userAgent and clearance if we're seeing a new one, and return headers unchanged
-      if (header.value.indexOf("cf_clearance") != -1 && useBrowserAgent[e.tabId] == true) {
-        if (clearance == "") {
-          clearance = header.value.match(/cf_clearance=[a-z0-9\-]+/g)[0];
+    // Continue if not Cookie header or __cfduid not present
+    if (header.name != "Cookie" || header.value.indexOf("__cfduid") == -1) {
+      continue;
+    }
 
-          // Set userAgent to browser-supplied one
-          for (var header of e.requestHeaders) {
-            if (header.name == "User-Agent") {
-              userAgent = header.value;
-            }
-          }
-          sendClearance[e.tabId] = true;
-          reloaded[e.tabId] = 0;
-          return {requestHeaders: e.requestHeaders};
+    // Set userAgent to browser-supplied one or ours
+    if (useBrowserAgent[e.tabId] == true) {
+      for (var h of e.requestHeaders) {
+        if (h.name == "User-Agent") {
+          userAgent = h.value;
         }
       }
-
-      if (failing[e.tabId] == true && useBrowserAgent[e.tabId] == true) {
-        // Set userAgent to browser-supplied one
-        for (var header of e.requestHeaders) {
-          if (header.name == "User-Agent") {
-            userAgent = header.value;
-          }
-        }
-        reloaded[e.tabId] = 0;
-        return {requestHeaders: e.requestHeaders};
-      }
-
-      // We're currently not failing, and not set to use browser agent, so set our User-Agent
-      for (var header of e.requestHeaders) {
-        if (header.name == "User-Agent" && userAgent != "") {
-          header.value = userAgent;
-        }
-      }
-
-      // Remove previous __cfduid and cf_clearance
-      header.value = header.value.replace(/__cfduid=\w+;?\s?/g, '');
-      header.value = header.value.replace(/cf_clearance=[a-z0-9\-]+;?\s?/g, '')
-
-      // Add clearance to existing cookies
-      if (header.value.length > 0 && header.value[header.value.length - 1] != ";") {
-        header.value += "; ";
-      }
-      header.value += clearance;
-
-      useBrowserAgent[e.tabId] = false;
+      reloaded[e.tabId] = 0;
       return {requestHeaders: e.requestHeaders};
     }
+    else {
+      for (var h of e.requestHeaders) {
+        if (h.name == "User-Agent" && userAgent != "") {
+          h.value = userAgent;
+        }
+      }
+    }
+
+    // Refresh userAgent and clearance if we're seeing a new one, and return headers unchanged
+    if (clearance == "" && header.value.indexOf("cf_clearance") != -1) {
+      clearance = header.value.match(/cf_clearance=[a-z0-9\-]+/g)[0];
+
+      // Set userAgent to current one
+      for (var h of e.requestHeaders) {
+        if (h.name == "User-Agent") {
+          userAgent = h.value;
+        }
+      }
+
+      reloaded[e.tabId] = 0;
+      sendClearance[e.tabId] = true;
+      return {requestHeaders: e.requestHeaders};
+    }
+
+    // Remove previous __cfduid and cf_clearance
+    header.value = header.value.replace(/__cfduid=\w+;?\s?/g, '');
+    header.value = header.value.replace(/cf_clearance=[a-z0-9\-]+;?\s?/g, '')
+
+    // Add clearance to existing cookies
+    if (header.value.length > 0 && header.value[header.value.length - 1] != ";") {
+      header.value += "; ";
+    }
+    header.value += clearance;
+
+    reloaded[e.tabId] = 0;
+    useBrowserAgent[e.tabId] = false;
+    return {requestHeaders: e.requestHeaders};
   }
 }
 
