@@ -1,5 +1,10 @@
-package:
-	mv .gitignore gitignore
-	rm -rf web-ext-build
+all: clean
+	mkdir -p build
+	git archive master | tar -x -C build
+	$(MAKE) -C build build
+
+clean:
+	rm -rf build
+
+build:
 	web-ext build
-	mv gitignore .gitignore
