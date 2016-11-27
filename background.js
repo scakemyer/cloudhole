@@ -9,7 +9,6 @@ var surgeClearances = "https://cloudhole.surge.sh/cloudhole.json";
 var userAgent = "";
 var clearance = "";
 var _id = "";
-var status = "";
 var failing = {};
 var reloaded = {};
 var sendClearance = {};
@@ -20,17 +19,21 @@ var refresh = null;
 var setUserAgent = function(newUserAgent) {
   _id = "";
   userAgent = newUserAgent;
+  chrome.storage.local.set({"userAgent": newUserAgent});
 }
 var setClearance = function(newClearance) {
   _id = "";
   clearance = newClearance;
+  chrome.storage.local.set({"clearance": newClearance});
 }
 var setApiKey = function(newApiKey) {
   _id = "";
   apiKey = newApiKey;
+  chrome.storage.local.set({"apiKey": newApiKey});
 }
 var setUseCloudHoleAPI = function(value) {
   useCloudHoleAPI = value;
+  chrome.storage.local.set({"useCloudHoleAPI": value});
   if (value == false) {
     _id = "";
     userAgent = "";
@@ -51,19 +54,21 @@ var fetchClearance = function() {
 
   getClearances().then(function(data) {
     if (data.length <= 0) {
-      status = "No clearance in CloudHole API.";
+      chrome.storage.local.set({"status": "No clearance in CloudHole API."});
     } else {
       var rand = Math.floor(Math.random() * data.length);
       userAgent = data[rand].userAgent;
       clearance = data[rand].cookies;
       _id = data[rand]._id;
-      status = "Received clearance from CloudHole API."
+      chrome.storage.local.set({"status": "Received clearance from CloudHole API."});
+      chrome.storage.local.set({"userAgent": userAgent});
+      chrome.storage.local.set({"clearance": clearance});
     }
     if (refresh) {
       refresh();
     }
   }, function(returnStatus) {
-    status = `Failed to get clearance from API: ${returnStatus}`;
+    chrome.storage.local.set({"status": `Failed to get clearance from API: ${returnStatus}`});
     if (refresh) {
       refresh();
     }
@@ -206,6 +211,8 @@ function rewriteHeaders(e) {
           userAgent = h.value;
         }
       }
+      chrome.storage.local.set({"userAgent": userAgent});
+      chrome.storage.local.set({"clearance": clearance});
 
       reloaded[e.tabId] = 0;
       sendClearance[e.tabId] = true;
@@ -232,23 +239,14 @@ function checkHeaders(e) {
   if (e.statusCode == 403) {
     for (var header of e.responseHeaders) {
       if (header.name == "Server" && header.value == "cloudflare-nginx") {
-        status = "CloudFlared! Need a new clearance cookie...";
+        chrome.storage.local.set({"status": "CloudFlared! Need a new clearance cookie..."});
         failing[e.tabId] = true;
-        if (refresh) {
-          refresh();
-        }
 
-        if (useBrowserAgent[e.tabId] == false && useCloudHoleAPI == true) {
+        if (useBrowserAgent[e.tabId] == false && useCloudHoleAPI == true && reloaded[e.tabId] > 0) {
           deleteClearance().then(function(data) {
-            status = "Deleted previous clearance from CloudHole API.";
-            if (refresh) {
-              refresh();
-            }
+            chrome.storage.local.set({"status": "Deleted previous clearance from CloudHole API."});
           }, function(returnStatus) {
-            status = `Failed to delete clearance: ${returnStatus}`;
-            if (refresh) {
-              refresh();
-            }
+            chrome.storage.local.set({"status": `Failed to delete clearance: ${returnStatus}`});
           });
           useBrowserAgent[e.tabId] = true;
         }
@@ -264,27 +262,21 @@ function checkHeaders(e) {
     failing[e.tabId] = false;
     useBrowserAgent[e.tabId] = false;
     if (sendClearance[e.tabId] == true && useCloudHoleAPI == true) {
+      sendClearance[e.tabId] = false;
       var payload = {
         'userAgent': userAgent,
         'cookies': clearance,
         'label': "WebExt"
       };
       postClearance(payload).then(function(data) {
-        status = "Synced clearance with CloudHole API.";
-        if (refresh) {
-          refresh();
-        }
+        chrome.storage.local.set({"status": "Synced clearance with CloudHole API."});
         if (reloaded[e.tabId] < 2) {
           reloaded[e.tabId] += 1;
           chrome.tabs.reload(e.tabId);
         }
       }, function(returnStatus) {
-        status = `Failed to sync clearance with API: ${returnStatus}`;
-        if (refresh) {
-          refresh();
-        }
+        chrome.storage.local.set({"status": `Failed to sync clearance with API: ${returnStatus}`});
       });
-      sendClearance[e.tabId] = false;
     }
   }
 }
@@ -309,16 +301,11 @@ if (useCloudHoleAPI == true) {
 
   getKey().then(function(data) {
     apiKey = data.key;
-    status = "API key received from CloudHole API.";
-    if (refresh) {
-      refresh();
-    }
+    chrome.storage.local.set({"apiKey": apiKey});
+    chrome.storage.local.set({"status": "API key received from CloudHole API."});
     fetchClearance();
   }, function(returnStatus) {
-    status = `Failed to get API key: ${returnStatus}, using random session key.`;
-    if (refresh) {
-      refresh();
-    }
+    chrome.storage.local.set({"status": `Failed to get API key: ${returnStatus}, using random session key.`});
     fetchClearance();
   });
 }
