@@ -9,6 +9,13 @@
     "48": "icons/cloudhole-48.png"
   },
 
+  "applications": {
+    "gecko": {
+      "id": "@cloudhole",
+      "strict_min_version": "45.0"
+    }
+  },
+
   "permissions": [
     "tabs", "storage", "webRequest", "webRequestBlocking", "<all_urls>"
   ],
