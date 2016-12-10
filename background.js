@@ -14,7 +14,6 @@ var reloaded = {};
 var sendClearance = {};
 var useBrowserAgent = {};
 var useCloudHoleAPI = true;
-var refresh = null;
 
 var setUserAgent = function(newUserAgent) {
   _id = "";
@@ -48,9 +47,6 @@ var fetchClearance = function() {
   _id = "";
   userAgent = "";
   clearance = "";
-  if (refresh) {
-    refresh();
-  }
 
   getClearances().then(function(data) {
     if (data.length <= 0) {
@@ -64,14 +60,8 @@ var fetchClearance = function() {
       chrome.storage.local.set({"userAgent": userAgent});
       chrome.storage.local.set({"clearance": clearance});
     }
-    if (refresh) {
-      refresh();
-    }
   }, function(returnStatus) {
     chrome.storage.local.set({"status": `Failed to get clearance from API: ${returnStatus}`});
-    if (refresh) {
-      refresh();
-    }
   });
 }
 
@@ -281,34 +271,32 @@ function checkHeaders(e) {
   }
 }
 
-if (useCloudHoleAPI == true) {
-  var getKey = function() {
-    return new Promise(function(resolve, reject) {
-      var xhr = new XMLHttpRequest();
-      xhr.open('GET', clearancesApi + '/key', true);
-      xhr.responseType = 'json';
-      xhr.onload = function() {
-        var statusCode = xhr.status;
-        if (statusCode == 200) {
-          resolve(xhr.response);
-        } else {
-          reject(statusCode);
-        }
-      };
-      xhr.send();
-    });
-  };
-
-  getKey().then(function(data) {
-    apiKey = data.key;
-    chrome.storage.local.set({"apiKey": apiKey});
-    chrome.storage.local.set({"status": "API key received from CloudHole API."});
-    fetchClearance();
-  }, function(returnStatus) {
-    chrome.storage.local.set({"status": `Failed to get API key: ${returnStatus}, using random session key.`});
-    fetchClearance();
+var getKey = function() {
+  return new Promise(function(resolve, reject) {
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', clearancesApi + '/key', true);
+    xhr.responseType = 'json';
+    xhr.onload = function() {
+      var statusCode = xhr.status;
+      if (statusCode == 200) {
+        resolve(xhr.response);
+      } else {
+        reject(statusCode);
+      }
+    };
+    xhr.send();
   });
-}
+};
+
+getKey().then(function(data) {
+  apiKey = data.key;
+  chrome.storage.local.set({"apiKey": apiKey});
+  chrome.storage.local.set({"status": "API key received from CloudHole API."});
+  fetchClearance();
+}, function(returnStatus) {
+  chrome.storage.local.set({"status": `Failed to get API key: ${returnStatus}, using random session key.`});
+  fetchClearance();
+});
 
 chrome.webRequest.onBeforeSendHeaders.addListener(
   rewriteHeaders,

@@ -1,5 +1,5 @@
 {
-  "version": "1.4.3",
+  "version": "1.4.4",
   "name": "CloudHole",
   "description": "Cross-website CloudFlare cookies",
   "manifest_version": 2,

@@ -21,6 +21,23 @@ var refresh = function() {
 }
 refresh();
 
+var getKey = function() {
+  return new Promise(function(resolve, reject) {
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', clearancesApi + '/key', true);
+    xhr.responseType = 'json';
+    xhr.onload = function() {
+      var statusCode = xhr.status;
+      if (statusCode == 200) {
+        resolve(xhr.response);
+      } else {
+        reject(statusCode);
+      }
+    };
+    xhr.send();
+  });
+};
+
 var fetchClearance = function() {
   chrome.storage.local.set({"status": ""}, refresh);
 
@@ -149,7 +166,19 @@ document.querySelector("#refresh").addEventListener("click", function() {
 
   chrome.storage.local.get('useCloudHoleAPI', function(result) {
     if (result.useCloudHoleAPI == true) {
-      fetchClearance();
+      getKey().then(function(data) {
+        chrome.storage.local.get('apiKey', function(result) {
+          if (result.apiKey != data.key) {
+            chrome.storage.local.set({"apiKey": data.key});
+            chrome.storage.local.set({"status": "New API key received from CloudHole API."}, refresh);
+            document.querySelector("#apikey").value = data.key;
+          }
+          fetchClearance();
+        });
+      }, function(returnStatus) {
+        chrome.storage.local.set({"status": `Failed to get API key: ${returnStatus}`}, refresh);
+        fetchClearance();
+      });
     }
   });
 });
